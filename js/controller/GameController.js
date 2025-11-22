@@ -13,7 +13,7 @@ import MainMenuView from '../view/MainMenuView.js';
 import OptionsView from '../view/OptionsView.js';
 import StorageManager from '../utils/StorageManager.js';
 import PowerUp, { POWERUP_TYPES } from '../model/PowerUp.js';
-import SpriteManager from './SpriteManager.js'; // <--- IMPORTANTE
+import SpriteManager from './SpriteManager.js'; 
 
 export default class GameController {
     constructor(canvas) {
@@ -38,12 +38,12 @@ export default class GameController {
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
 
-        this.spriteManager = new SpriteManager(); // <--- INSTANCIAR
-        
-        // Pasamos spriteManager al renderer
+        this.spriteManager = new SpriteManager();
         this.renderer = new Renderer(this.ctx, this.gameWidth, this.gameHeight, this.spriteManager);
         
-        this.hud = new HUD(this.gameWidth, this.gameHeight);
+        
+        this.hud = new HUD(this.gameWidth, this.gameHeight, this.spriteManager);
+        
         this.gameOverView = new GameOverView(this.gameWidth, this.gameHeight);
         this.mainMenuView = new MainMenuView(this.gameWidth, this.gameHeight);
         this.optionsView = new OptionsView(this.gameWidth, this.gameHeight);
@@ -74,7 +74,6 @@ export default class GameController {
                     this.startLevel(); 
                     this.audioController.playMusic(1);
                 } else {
-                    console.log("No hay partida guardada");
                     this.audioController.play('bottomHit');
                 }
                 break;
@@ -121,9 +120,12 @@ export default class GameController {
             this.balls = [...this.balls, ...newBalls];
             return;
         }
+        
+        // --- CAMBIO 2: Guardar duración total para la barra del HUD ---
         this.activeEffects.push({
             type: powerUp.type,
-            timeLeft: powerUp.duration
+            timeLeft: powerUp.duration,
+            totalDuration: powerUp.duration // <--- ESTO ARREGLA LA BARRA
         });
         this.applyEffect(powerUp.type, true);
     }
@@ -131,11 +133,9 @@ export default class GameController {
     applyEffect(type, isActive) {
         switch(type) {
             case POWERUP_TYPES.MEGA_PADDLE:
-                // Base 128 -> Mega 192
                 this.paddle.width = isActive ? 192 : 128;
                 break;
             case POWERUP_TYPES.MINI_PADDLE:
-                // Base 128 -> Mini 64
                 this.paddle.width = isActive ? 64 : 128;
                 break;
             case POWERUP_TYPES.INVERTED:
@@ -163,6 +163,8 @@ export default class GameController {
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
+    // ... (adjustMusicVol, adjustSFXVol, togglePause, returnToMenu, launchBall iguales) ...
+    
     adjustMusicVol(amount) {
         this.musicVolume += amount;
         this.musicVolume = Math.round(Math.max(0, Math.min(1, this.musicVolume)) * 10) / 10;
@@ -206,7 +208,6 @@ export default class GameController {
 
         this.paddle.update(deltaTime);
         
-        // Update Bolas
         this.balls.forEach(ball => ball.update(deltaTime, this.paddle));
         this.balls = this.balls.filter(ball => ball.position.y <= this.gameHeight);
 
@@ -214,7 +215,6 @@ export default class GameController {
         this.powerUps.forEach(p => p.update(deltaTime));
         this.powerUps = this.powerUps.filter(p => !p.markedForDeletion);
 
-        // Efectos
         this.activeEffects.forEach(effect => {
             effect.timeLeft -= deltaTime;
             if (effect.type === POWERUP_TYPES.EXPLOSIVE) this.balls.forEach(b => b.isExplosive = true);
@@ -226,17 +226,14 @@ export default class GameController {
         });
         this.activeEffects = this.activeEffects.filter(e => e.timeLeft > 0);
 
-        // Colisiones
         this.collisionDetector.detect(this.balls, this.paddle, this.level, this.audioController, this);
 
-        // Win
         if (this.level.bricks.length === 0) {
             this.audioController.play('win');
             this.currentLevelNum++;
             this.startLevel(); 
         }
 
-        // Lose Life
         if (this.balls.length === 0) {
             const isDead = this.player.loseLife();
             
@@ -285,7 +282,7 @@ export default class GameController {
             }
         } 
         else if (this.gameState.current === GAMESTATE.GAMEOVER) {
-            this.renderer.draw([...this.balls, ...this.paddle, ...this.level.bricks]); // (Opcional: dibujar paddle en gameover)
+            this.renderer.draw([...this.balls, this.paddle, ...this.level.bricks]);
             this.gameOverView.draw(this.ctx, this.player.score, this.currentLevelNum);
         }
     }

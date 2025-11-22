@@ -4,10 +4,11 @@ export default class InputHandler {
     constructor(gameController) {
         this.game = gameController;
 
+        // --- KEY DOWN (Presionar tecla) ---
         document.addEventListener('keydown', (event) => {
             const state = this.game.gameState.current;
 
-            // --- MENÚ PRINCIPAL ---
+            // MENU
             if (state === GAMESTATE.MENU) {
                 switch (event.code) {
                     case 'ArrowUp': this.game.mainMenuView.moveUp(); break;
@@ -15,8 +16,7 @@ export default class InputHandler {
                     case 'Space': case 'Enter': this.game.handleMenuSelection(); break;
                 }
             } 
-            
-            // --- OPCIONES ---
+            // OPCIONES
             else if (state === GAMESTATE.OPTIONS) {
                 const currentOpt = this.game.optionsView.getCurrentOption();
                 switch (event.code) {
@@ -37,51 +37,42 @@ export default class InputHandler {
                         break;
                 }
             }
-
-            // --- JUEGO (RUNNING) ---
+            // JUEGO (RUNNING)
             else if (state === GAMESTATE.RUNNING) {
                 switch (event.code) {
-                    case 'ArrowLeft': this.game.paddle.moveLeft(); break;
-                    case 'ArrowRight': this.game.paddle.moveRight(); break;
-                    case 'Escape': case 'KeyP': this.game.togglePause(); break;
+                    // NUEVA LÓGICA: Solo avisamos que se presionó
+                    case 'ArrowLeft': this.game.paddle.pressLeft(); break;
+                    case 'ArrowRight': this.game.paddle.pressRight(); break;
                     
-                    // NUEVO: Lanzar bola
-                    case 'Space': 
-                        this.game.launchBall(); 
-                        break;
+                    case 'Escape': case 'KeyP': this.game.togglePause(); break;
+                    case 'Space': this.game.launchBall(); break;
                 }
             }
-
-            // --- PAUSA (NUEVO BLOQUE) ---
+            // PAUSA
             else if (state === GAMESTATE.PAUSED) {
                 switch (event.code) {
-                    case 'Escape': 
-                    case 'KeyP': 
-                        // Quitar pausa
-                        this.game.togglePause(); 
-                        break;
-                    
+                    case 'Escape': case 'KeyP': this.game.togglePause(); break;
                     case 'KeyQ':
-                        // SALIR AL MENÚ PRINCIPAL
-                        // Primero guardamos por seguridad
-                        this.game.togglePause(); // Para guardar estado actual
+                        this.game.togglePause(); 
                         this.game.gameState.set(GAMESTATE.MENU); 
                         break;
                 }
             }
-            
-            // --- GAME OVER ---
+            // GAME OVER
             else if (state === GAMESTATE.GAMEOVER) {
                 if (event.code === 'Space') {
-                    this.game.returnToMenu(); // Volver al menú en lugar de reiniciar directo
+                    this.game.returnToMenu();
                 }
             }
         });
 
+        // --- KEY UP (Soltar tecla) ---
         document.addEventListener('keyup', (event) => {
             if (this.game.gameState.current === GAMESTATE.RUNNING) {
-                if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') {
-                    this.game.paddle.stop();
+                switch (event.code) {
+                    // NUEVA LÓGICA: Solo avisamos que se soltó ESA tecla específica
+                    case 'ArrowLeft': this.game.paddle.releaseLeft(); break;
+                    case 'ArrowRight': this.game.paddle.releaseRight(); break;
                 }
             }
         });

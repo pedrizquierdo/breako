@@ -1,71 +1,81 @@
 export default class HUD {
-    constructor(gameWidth, gameHeight) {
+    constructor(gameWidth, gameHeight, spriteManager) {
         this.gameWidth = gameWidth;
         this.gameHeight = gameHeight;
+        this.spriteManager = spriteManager;
     }
 
     draw(ctx, player, activeEffects, levelNumber) {
-        // 1. FONDO TRANSPARENTE:
-        // Eliminamos el ctx.fillRect y la línea divisoria para que sea limpio.
-
         ctx.fillStyle = "white";
         ctx.font = "bold 20px 'Courier New'";
         
-        // --- NIVEL (Izquierda) ---
+        // --- HEADER (Parte Superior - Mantenemos info vital) ---
+        // Nivel
         ctx.textAlign = "left";
         ctx.fillText(`LVL ${levelNumber}`, 20, 30);
 
-        // --- PUNTUACIÓN (Centro - Opcional) ---
+        // Puntuación
         ctx.textAlign = "center";
         ctx.fillText(`${player.score}`, this.gameWidth / 2, 30);
 
-        // --- VIDAS (Derecha) ---
+        // Vidas
         ctx.textAlign = "right";
-        // Dibujamos corazones o bloques simples
         let hearts = "♥".repeat(player.lives);
         ctx.fillText(hearts, this.gameWidth - 20, 30);
 
-
-        // 2. INDICADOR DE ESCUDO (ARREGLADO)
-        // Lo movemos arriba a la derecha (debajo de vidas) para que NO TAPE el paddle.
+        // Escudo (Arriba a la derecha, debajo de vidas)
         if (player.activeShield) {
-            ctx.textAlign = "right";
             ctx.font = "bold 16px 'Courier New'";
             ctx.fillText("[ ESCUDO ACTIVO ]", this.gameWidth - 20, 55);
         }
 
-
-        // 3. POWER-UPS COMO BARRAS DE PROGRESO
-        let yOffset = 60; // Empezamos a dibujar debajo del texto superior
+        // --- FOOTER (Parte Inferior - PowerUps Activos) ---
+        // Empezamos desde abajo y vamos subiendo
+        let yPos = this.gameHeight - 40; 
         const barWidth = 100;
-        const barHeight = 10;
+        const barHeight = 8; // Un poco más finas para que sea elegante
+        const iconSize = 20;
 
         activeEffects.forEach(effect => {
-            // Definimos la duración máxima para calcular el porcentaje
-            // (Debes asegurarte que coincida con lo que pusiste en PowerUp.js)
-            let maxDuration = 0;
-            if (effect.type === 'EXPLOSIVE') maxDuration = 8000;
-            if (effect.type === 'FRENZY') maxDuration = 12000;
-
-            // Calcular porcentaje restante (0.0 a 1.0)
+            let maxDuration = effect.totalDuration || 10000;
             let pct = Math.max(0, effect.timeLeft / maxDuration);
 
-            // Dibujar etiqueta del efecto
-            ctx.textAlign = "left";
-            ctx.font = "14px 'Courier New'";
-            ctx.fillStyle = "white";
-            ctx.fillText(effect.type, 20, yOffset);
+            // 1. DIBUJAR ICONO (Izquierda Abajo)
+            const sprite = this.spriteManager.get(effect.type);
+            
+            if (sprite) {
+                // Icono
+                ctx.drawImage(sprite, 20, yPos - 14, iconSize, iconSize);
+            } else {
+                // Fallback Texto
+                ctx.textAlign = "left";
+                ctx.font = "12px 'Courier New'";
+                ctx.fillStyle = "white";
+                ctx.fillText(effect.type.charAt(0), 20, yPos);
+            }
 
-            // Dibujar Contenedor de la barra (borde blanco)
+            // 2. DIBUJAR BARRA (Al lado del icono)
+            const barX = 50; 
+
+            // Fondo de la barra (Gris oscuro para ver cuánto falta)
+            ctx.fillStyle = "#333";
+            ctx.fillRect(barX, yPos - 8, barWidth, barHeight);
+
+            // Borde
             ctx.strokeStyle = "white";
             ctx.lineWidth = 1;
-            ctx.strokeRect(100, yOffset - 10, barWidth, barHeight);
+            ctx.strokeRect(barX, yPos - 8, barWidth, barHeight);
 
-            // Dibujar Relleno de la barra (blanco sólido que se encoge)
+            // Relleno (Blanco)
             ctx.fillStyle = "white";
-            ctx.fillRect(100, yOffset - 10, barWidth * pct, barHeight);
+            ctx.fillRect(barX, yPos - 8, barWidth * pct, barHeight);
 
-            yOffset += 25; // Espacio para el siguiente efecto
+            // Etiqueta de texto pequeña encima de la barra (opcional, ayuda a identificar)
+            // ctx.font = "10px 'Courier New'";
+            // ctx.fillText(effect.type, barX, yPos - 12);
+
+            // SUBIMOS la posición Y para el siguiente efecto (Stack Up)
+            yPos -= 30; 
         });
     }
 }
