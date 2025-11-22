@@ -1,0 +1,20 @@
+body {
+    background-color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+canvas {
+    background-color: #000;
+    border: 2px solid #444;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    
+    /* ESTO ES VITAL PARA PIXEL ART: */
+    image-rendering: pixelated; 
+    image-rendering: crisp-edges;
+}
