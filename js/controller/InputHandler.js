@@ -90,8 +90,18 @@ export default class InputHandler {
             }
             // GAME OVER
             else if (state === GAMESTATE.GAMEOVER) {
-                if (event.code === 'Space') {
-                    this.game.returnToMenu();
+                switch (event.code) {
+                    case 'ArrowUp': 
+                        this.game.gameOverView.moveUp(); 
+                        break;
+                    case 'ArrowDown': 
+                        this.game.gameOverView.moveDown(); 
+                        break;
+                    case 'Space': 
+                    case 'Enter':
+                        // Ejecutar la acción seleccionada
+                        this.game.handleGameOverSelection(); 
+                        break;
                 }
             }
         });

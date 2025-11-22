@@ -1,5 +1,5 @@
 body {
-    background-color: #222;
+    background-color: #111;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -11,10 +11,25 @@ body {
 
 canvas {
     background-color: #000;
-    border: 2px solid #444;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    /* Borde redondeado para simular el tubo */
+    border-radius: 20px; 
+    border: 4px solid #333;
     
-    /* ESTO ES VITAL PARA PIXEL ART: */
+    /* Brillo externo de pantalla encendida */
+    box-shadow: 
+        0 0 20px rgba(200, 230, 255, 0.1),
+        inset 0 0 60px rgba(0, 0, 0, 0.5); /* Sombra interna */
+        
     image-rendering: pixelated; 
     image-rendering: crisp-edges;
+}
+
+@keyframes turnOn {
+    0% { transform: scale(1, 0.01); opacity: 0; }
+    50% { transform: scale(1, 0.01); opacity: 1; }
+    100% { transform: scale(1, 1); opacity: 1; }
+}
+
+canvas {
+    animation: turnOn 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }

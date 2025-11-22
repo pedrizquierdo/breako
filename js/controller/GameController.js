@@ -61,20 +61,36 @@ export default class GameController {
         const selection = this.mainMenuView.getSelection();
         switch(selection) {
             case "NUEVA PARTIDA":
-                this.storageManager.clearProgress();
-                this.startLevel();
+                this.storageManager.clearProgress(); // Borrar guardado viejo
+                
+                this.currentLevelNum = 1; // Volver al nivel 1
+                this.player.reset();      // Reiniciar vidas, score y monedas
+                // -----------------------------------------
+
+                this.startLevel();        // Construir el nivel
                 this.audioController.playMusic(0);
                 break;
             case "CONTINUAR":
                 if (this.storageManager.hasSavedGame()) {
                     const savedData = this.storageManager.loadProgress();
+                    
+                    // Restaurar estadísticas del jugador
                     this.currentLevelNum = savedData.level;
                     this.player.lives = savedData.lives;
                     this.player.score = savedData.score;
                     this.player.puntosMejora = savedData.puntosMejora;
+                    
+                    // 1. Iniciar nivel (esto crea uno random por defecto)
                     this.startLevel(); 
+
+                    // 2. SI hay datos de ladrillos, sobrescribimos el nivel random
+                    if (savedData.bricks && savedData.bricks.length > 0) {
+                        this.level.loadFromSave(savedData.bricks);
+                    }
+                    
                     this.audioController.playMusic(1);
                 } else {
+                    console.log("No hay partida guardada");
                     this.audioController.play('bottomHit');
                 }
                 break;
@@ -181,13 +197,26 @@ export default class GameController {
     togglePause() {
         if (this.gameState.current === GAMESTATE.RUNNING) {
             this.gameState.set(GAMESTATE.PAUSED);
+            
+            // 1. Extraer datos de los ladrillos actuales
+            const bricksData = this.level.bricks.map(brick => ({
+                x: brick.position.x,
+                y: brick.position.y,
+                resistencia: brick.resistencia
+            }));
+
+            // 2. Guardar todo en el objeto dataToSave
             const dataToSave = {
                 level: this.currentLevelNum,
                 lives: this.player.lives,
                 score: this.player.score,
-                puntosMejora: this.player.puntosMejora
+                puntosMejora: this.player.puntosMejora,
+                bricks: bricksData // <--- AÑADIDO
             };
+            
             this.storageManager.saveProgress(dataToSave);
+            console.log("Juego Guardado con estado del nivel.");
+            
         } else if (this.gameState.current === GAMESTATE.PAUSED) {
             this.gameState.set(GAMESTATE.RUNNING);
         }
@@ -209,6 +238,38 @@ export default class GameController {
     launchBall() {
         if (this.gameState.current === GAMESTATE.RUNNING) {
             this.balls.forEach(ball => ball.launch());
+        }
+    }
+
+    handleGameOverSelection() {
+        const selection = this.gameOverView.getSelection();
+        
+        switch(selection) {
+            case "NUEVA PARTIDA":
+                // Borramos progreso y empezamos de cero
+                this.storageManager.clearProgress();
+                this.currentLevelNum = 1;
+                this.player.reset();
+                
+                this.startLevel(); // Esto pone el estado en RUNNING
+                this.audioController.playMusic(0);
+                break;
+
+            case "MENU":
+                // CORRECCIÓN:
+                // No llamamos a this.resetGame() porque eso inicia el juego.
+                // Solo cambiamos el estado y limpiamos objetos visualmente.
+                
+                this.gameState.set(GAMESTATE.MENU);
+                
+                // Reseteamos objetos para que estén listos, pero SIN iniciar el nivel
+                this.balls = [new Ball(this.gameWidth, this.gameHeight)];
+                this.paddle.reset();
+                this.powerUps = [];
+                this.activeEffects = [];
+                
+                this.audioController.playMusic(0); 
+                break;
         }
     }
 
@@ -249,6 +310,7 @@ export default class GameController {
             if (this.player.lives <= 0) {
                 this.audioController.play('lose');
                 this.gameState.set(GAMESTATE.GAMEOVER);
+                this.gameOverView.resetSelection();
             } else {
                 this.balls = [new Ball(this.gameWidth, this.gameHeight)];
                 this.paddle.reset();
@@ -263,9 +325,11 @@ export default class GameController {
 
         if (this.gameState.current === GAMESTATE.MENU) {
             this.mainMenuView.draw(this.ctx);
+            this.renderer.drawCRT();
         } 
         else if (this.gameState.current === GAMESTATE.OPTIONS) {
             this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode); 
+            this.renderer.drawCRT();
         }
         else if (this.gameState.current === GAMESTATE.RUNNING || this.gameState.current === GAMESTATE.PAUSED) {
             this.renderer.draw([...this.balls, this.paddle, ...this.level.bricks, ...this.powerUps]);
@@ -276,6 +340,8 @@ export default class GameController {
             }
 
             this.hud.draw(this.ctx, this.player, this.activeEffects || [], this.currentLevelNum);
+
+            this.renderer.drawCRT();
 
             if (this.gameState.current === GAMESTATE.PAUSED) {
                 this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
@@ -292,6 +358,9 @@ export default class GameController {
         } 
         else if (this.gameState.current === GAMESTATE.GAMEOVER) {
             this.renderer.draw([...this.balls, this.paddle, ...this.level.bricks]);
+
+            this.renderer.drawCRT();
+
             this.gameOverView.draw(this.ctx, this.player.score, this.currentLevelNum);
         }
     }

@@ -80,6 +80,42 @@ export default class Renderer {
         });
     }
 
+    drawCRT() {
+        this.ctx.save();
+        
+        // 1. SCANLINES (Líneas horizontales)
+        // Bajé un poco la opacidad de las líneas también (0.3 -> 0.2) para limpiar la imagen
+        this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)"; 
+        for (let i = 0; i < this.height; i += 4) {
+            this.ctx.fillRect(0, i, this.width, 2);
+        }
+
+        // 2. VIGNETTE (Esquinas oscuras)
+        const gradient = this.ctx.createRadialGradient(
+            this.width / 2, this.height / 2, this.height / 2.5, 
+            this.width / 2, this.height / 2, this.height
+        );
+        gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+        gradient.addColorStop(0.9, "rgba(0, 0, 0, 0.1)"); // Más suave
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");   // Más suave
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        // 3. FLICKER (Parpadeo) - AJUSTADO AQUÍ
+        // Antes: 0.03 (3% de opacidad máxima)
+        // Ahora: 0.01 (1% de opacidad máxima) -> Mucho más tenue
+        const opacity = Math.random() * 0.01; 
+        
+        this.ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        
+        // Usamos 'screen' para que solo ilumine y no "lave" los negros
+        this.ctx.globalCompositeOperation = 'screen'; 
+        this.ctx.fillRect(0, 0, this.width, this.height);
+
+        this.ctx.restore();
+    }
+
     drawDarkness(paddle, balls) {
         this.ctx.save();
         this.ctx.fillStyle = "black";
