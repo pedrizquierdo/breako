@@ -47,12 +47,21 @@ export default class Ball {
             this.position.y += this.speed.y * speedMultiplier;
 
             // Rebotes Paredes
-            if (this.position.x + this.size > this.gameWidth || this.position.x < 0) {
-                this.speed.x = -this.speed.x;
+            if (this.position.x + this.size > this.gameWidth) {
+                this.speed.x = -Math.abs(this.speed.x); // Forzamos velocidad a la Izquierda
+                this.position.x = this.gameWidth - this.size; // CORRECCIÓN: La sacamos del muro
             }
-            // Rebote Techo
+
+            // Pared Izquierda
+            if (this.position.x < 0) {
+                this.speed.x = Math.abs(this.speed.x); // Forzamos velocidad a la Derecha
+                this.position.x = 0; // CORRECCIÓN: La sacamos del muro
+            }
+
+            // Techo
             if (this.position.y < 0) {
-                this.speed.y = -this.speed.y;
+                this.speed.y = Math.abs(this.speed.y); // Forzamos velocidad Abajo
+                this.position.y = 0; // CORRECCIÓN: La sacamos del techo
             }
         }
     }

@@ -66,6 +66,15 @@ export default class CollisionDetector {
                  let speed = Math.sqrt(ball.speed.x * ball.speed.x + ball.speed.y * ball.speed.y);
                  ball.speed.x = speed * Math.sin(angle);
                  ball.speed.y = -speed * Math.cos(angle);
+
+                 const speedMultiplier = 1.05;
+                 const maxSpeed = 12; // Velocidad límite
+                
+                 if (Math.abs(ball.speed.x) < maxSpeed && Math.abs(ball.speed.y) < maxSpeed) {
+                    ball.speed.x *= speedMultiplier;
+                    ball.speed.y *= speedMultiplier;
+                 }
+
                  ball.position.y = paddle.position.y - ball.size;
                  audioController.play('hit');
             }
@@ -88,6 +97,7 @@ export default class CollisionDetector {
                     
                     // Lógica: BOLA EXPLOSIVA
                     if (ball.isExplosive) {
+                        gameController.triggerShake(10);
                         level.bricks.forEach(otherBrick => {
                             const dx = brick.position.x - otherBrick.position.x;
                             const dy = brick.position.y - otherBrick.position.y;
@@ -100,9 +110,10 @@ export default class CollisionDetector {
 
                     if (destroyed || ball.isExplosive) { 
                         gameController.player.addScore(10);
+                        gameController.spawnParticles(brick.position, '#FFFFFF');
                         
                         // Lógica: LLUVIA
-                        const dropRate = rainActive ? 0.8 : 0.15;
+                        const dropRate = rainActive ? 0.8 : 0.3;
                         if (Math.random() < dropRate) {
                             gameController.spawnPowerUp(brick.position);
                         }

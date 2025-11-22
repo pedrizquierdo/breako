@@ -14,6 +14,7 @@ import OptionsView from '../view/OptionsView.js';
 import StorageManager from '../utils/StorageManager.js';
 import PowerUp, { POWERUP_TYPES } from '../model/PowerUp.js';
 import SpriteManager from './SpriteManager.js'; 
+import Particle from '../model/Particle.js';
 
 export default class GameController {
     constructor(canvas) {
@@ -29,6 +30,7 @@ export default class GameController {
         this.balls = [];
         this.powerUps = [];
         this.activeEffects = [];
+        this.particles = [];
         
         this.paddle = new Paddle(this.gameWidth, this.gameHeight);
         this.balls.push(new Ball(this.gameWidth, this.gameHeight));
@@ -241,6 +243,16 @@ export default class GameController {
         }
     }
 
+    triggerShake(amount) {
+        this.renderer.shake(amount);
+    }
+
+    spawnParticles(position, color = '#FFFFFF') {
+    for (let i = 0; i < 8; i++) { // 8 partículas por ladrillo
+        this.particles.push(new Particle(position, color));
+    }
+}
+
     handleGameOverSelection() {
         const selection = this.gameOverView.getSelection();
         
@@ -282,6 +294,8 @@ export default class GameController {
         this.balls = this.balls.filter(ball => ball.position.y <= this.gameHeight);
 
         this.level.update(deltaTime);
+        this.particles.forEach(p => p.update());
+        this.particles = this.particles.filter(p => p.life > 0);
         this.powerUps.forEach(p => p.update(deltaTime));
         this.powerUps = this.powerUps.filter(p => !p.markedForDeletion);
 
@@ -301,10 +315,18 @@ export default class GameController {
         if (this.level.bricks.length === 0) {
             this.audioController.play('win');
             this.currentLevelNum++;
-            this.startLevel(); 
+            this.level = new Level(this.gameWidth, this.gameHeight);
+            this.powerUps = []; 
+
+            this.balls.forEach(ball => {
+            ball.speed.x *= 1.3;
+            ball.speed.y *= 1.3;
+            });
         }
+        
 
         if (this.balls.length === 0) {
+            this.triggerShake(20);
             const isDead = this.player.loseLife();
             
             if (this.player.lives <= 0) {
@@ -322,6 +344,13 @@ export default class GameController {
 
     draw() {
         this.renderer.clear();
+
+        this.particles.forEach(p => {
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = p.color;
+            this.ctx.fillRect(p.position.x, p.position.y, p.size, p.size);
+        });
+        this.ctx.globalAlpha = 1.0;
 
         if (this.gameState.current === GAMESTATE.MENU) {
             this.mainMenuView.draw(this.ctx);

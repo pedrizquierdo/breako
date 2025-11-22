@@ -4,6 +4,11 @@ export default class Renderer {
         this.width = width;
         this.height = height;
         this.spriteManager = spriteManager;
+        this.shakeIntensity = 0;
+    }
+
+    shake(intensity) {
+        this.shakeIntensity = intensity;
     }
 
     clear() {
@@ -11,6 +16,20 @@ export default class Renderer {
     }
 
     draw(gameObjects) {
+
+        this.ctx.save(); // Guardamos estado original
+
+        // --- LÓGICA DE TEMBLOR ---
+        if (this.shakeIntensity > 0) {
+            const dx = (Math.random() - 0.5) * this.shakeIntensity;
+            const dy = (Math.random() - 0.5) * this.shakeIntensity;
+            this.ctx.translate(dx, dy);
+            
+            // Reducimos el temblor poco a poco (decay)
+            this.shakeIntensity *= 0.9;
+            if (this.shakeIntensity < 0.5) this.shakeIntensity = 0;
+        }
+
         gameObjects.forEach(object => {
             const name = object.constructor.name;
 
@@ -78,7 +97,9 @@ export default class Renderer {
                 }
             }
         });
+        this.ctx.restore(); // Restauramos estado original
     }
+    
 
     drawCRT() {
         this.ctx.save();
@@ -116,24 +137,34 @@ export default class Renderer {
         this.ctx.restore();
     }
 
-    drawDarkness(paddle, balls) {
+    drawDarkness() {
         this.ctx.save();
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 0, this.width, this.height);
         
-        this.ctx.globalCompositeOperation = 'destination-out';
+        // EFECTO: LUZ ROTA / ESTROBOSCÓPICA
         
-        // Luz Paddle
-        this.ctx.beginPath();
-        this.ctx.arc(paddle.position.x + paddle.width/2, paddle.position.y + paddle.height/2, 150, 0, Math.PI*2);
-        this.ctx.fill();
+        // Obtenemos el tiempo actual para crear patrones
+        const time = Date.now();
 
-        // Luz Bolas
-        balls.forEach(ball => {
-            this.ctx.beginPath();
-            this.ctx.arc(ball.position.x + ball.size/2, ball.position.y + ball.size/2, 100, 0, Math.PI*2);
-            this.ctx.fill();
-        });
+        // Lógica:
+        // 1. Oscilación lenta (Math.sin): Simula que la luz va y viene.
+        // 2. Ruido aleatorio (Math.random): Simula el fallo eléctrico repentino.
+        
+        const sineWave = Math.sin(time * 0.01); // Onda suave
+        
+        // Si la onda está en su punto bajo O si el random decide "apagar" la luz (30% chance)
+        if (sineWave < -0.5 || Math.random() < 0.3) {
+            // PANTALLA NEGRA TOTAL (Luz apagada)
+            this.ctx.fillStyle = "black";
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        } 
+        else {
+            // LUZ TENUE / PARPADEANTE
+            // Incluso cuando está "encendida", le ponemos una capa oscura variable
+            // para que cueste ver un poco.
+            const darknessLevel = 0.3 + (Math.random() * 0.4); // Entre 30% y 70% de oscuridad
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${darknessLevel})`;
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        }
 
         this.ctx.restore();
     }
