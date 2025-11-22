@@ -6,6 +6,7 @@ export default class OptionsView {
         this.options = [
             { label: "MÚSICA", type: "music" },
             { label: "EFECTOS", type: "sfx" },
+            { label: "CONTROLES", type: "input" }, // <--- NUEVA OPCIÓN
             { label: "VOLVER", type: "back" }
         ];
         this.selectedIndex = 0;
@@ -25,7 +26,8 @@ export default class OptionsView {
         return this.options[this.selectedIndex];
     }
 
-    draw(ctx, musicVol, sfxVol) {
+    // Recibimos inputMode para dibujarlo
+    draw(ctx, musicVol, sfxVol, inputMode) {
         // Fondo negro
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, this.gameWidth, this.gameHeight);
@@ -38,42 +40,48 @@ export default class OptionsView {
         ctx.font = "24px 'Courier New'";
         
         this.options.forEach((opt, index) => {
-            // Blanco si está seleccionado, Gris si no
             const isSelected = index === this.selectedIndex;
             const color = isSelected ? "#FFFFFF" : "#555555";
-            const yPos = 250 + (index * 90);
+            const yPos = 250 + (index * 70); // Ajusté un poco el espaciado
 
             ctx.fillStyle = color;
             
-            if (opt.type === 'music' || opt.type === 'sfx') {
-                // Dibujar Etiqueta
-                let prefix = isSelected ? "> " : "";
-                ctx.fillText(prefix + opt.label, this.gameWidth / 2, yPos);
-
-                // Dibujar Barra de Volumen Retro [■■■■■-----]
-                let currentVol = opt.type === 'music' ? musicVol : sfxVol;
-                let bars = Math.round(currentVol * 10); 
-                
-                // Dibujar los bloques manualmente para que se vean mejor
-                let barWidth = 20;
-                let barHeight = 20;
-                let startX = (this.gameWidth / 2) - (10 * barWidth) / 2;
-
-                for(let i = 0; i < 10; i++) {
-                    if (i < bars) {
-                        ctx.fillStyle = isSelected ? "white" : "#888"; // Lleno
-                        ctx.fillRect(startX + (i * 22), yPos + 20, barWidth, barHeight);
-                    } else {
-                        ctx.strokeStyle = "#333"; // Vacío (solo borde)
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(startX + (i * 22), yPos + 20, barWidth, barHeight);
-                    }
-                }
-
+            // TÍTULO DE LA OPCIÓN
+            let prefix = isSelected ? "> " : "";
+            
+            if (opt.type === 'back') {
+                 let text = isSelected ? `[ ${opt.label} ]` : opt.label;
+                 ctx.fillText(text, this.gameWidth / 2, yPos);
             } else {
-                // Botón Volver
-                let text = isSelected ? `[ ${opt.label} ]` : opt.label;
-                ctx.fillText(text, this.gameWidth / 2, yPos);
+                ctx.fillText(prefix + opt.label, this.gameWidth / 2, yPos);
+                
+                // VALOR DE LA OPCIÓN (Debajo)
+                let valueY = yPos + 25;
+                
+                if (opt.type === 'music' || opt.type === 'sfx') {
+                    // Barras de volumen
+                    let currentVol = opt.type === 'music' ? musicVol : sfxVol;
+                    let bars = Math.round(currentVol * 10);
+                    let barWidth = 20;
+                    let barHeight = 15;
+                    let startX = (this.gameWidth / 2) - (10 * barWidth) / 2;
+
+                    for(let i = 0; i < 10; i++) {
+                        if (i < bars) {
+                            ctx.fillStyle = isSelected ? "white" : "#888";
+                            ctx.fillRect(startX + (i * 22), valueY, barWidth, barHeight);
+                        } else {
+                            ctx.strokeStyle = "#333";
+                            ctx.strokeRect(startX + (i * 22), valueY, barWidth, barHeight);
+                        }
+                    }
+                } 
+                // --- DIBUJAR SELECTOR DE INPUT ---
+                else if (opt.type === 'input') {
+                    ctx.fillStyle = isSelected ? "#fa0" : "#888"; // Naranja si seleccionado
+                    let text = inputMode === 'MOUSE' ? "< MOUSE >" : "< TECLADO >";
+                    ctx.fillText(text, this.gameWidth / 2, valueY + 5);
+                }
             }
         });
 

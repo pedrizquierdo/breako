@@ -37,6 +37,7 @@ export default class GameController {
         this.audioController = new AudioController();
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
+        this.inputMode = 'KEYBOARD';
 
         this.spriteManager = new SpriteManager();
         this.renderer = new Renderer(this.ctx, this.gameWidth, this.gameHeight, this.spriteManager);
@@ -191,6 +192,14 @@ export default class GameController {
             this.gameState.set(GAMESTATE.RUNNING);
         }
     }
+
+    toggleInputMode() {
+        if (this.inputMode === 'KEYBOARD') {
+            this.inputMode = 'MOUSE';
+        } else {
+            this.inputMode = 'KEYBOARD';
+        }
+    }
         
     returnToMenu() {
         this.gameState.set(GAMESTATE.MENU);
@@ -256,7 +265,7 @@ export default class GameController {
             this.mainMenuView.draw(this.ctx);
         } 
         else if (this.gameState.current === GAMESTATE.OPTIONS) {
-            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume); 
+            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode); 
         }
         else if (this.gameState.current === GAMESTATE.RUNNING || this.gameState.current === GAMESTATE.PAUSED) {
             this.renderer.draw([...this.balls, this.paddle, ...this.level.bricks, ...this.powerUps]);

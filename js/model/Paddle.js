@@ -46,6 +46,25 @@ export default class Paddle {
         this.speed = 0;
     }
 
+    moveTo(targetX) {
+        // Calculamos la posición central del paddle
+        let newX = targetX - (this.width / 2);
+
+        // Lógica de Controles Invertidos con Mouse:
+        // Invertimos la coordenada X respecto al centro de la pantalla
+        if (this.invertedControls) {
+            newX = this.gameWidth - targetX - (this.width / 2);
+        }
+
+        this.position.x = newX;
+
+        // Respetar límites de pantalla inmediatamente
+        if (this.position.x < 0) this.position.x = 0;
+        if (this.position.x + this.width > this.gameWidth) {
+            this.position.x = this.gameWidth - this.width;
+        }
+    }
+
     update(deltaTime) {
         // Lógica de movimiento fluida
         // Si presionas ambas teclas a la vez, se queda quieto

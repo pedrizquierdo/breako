@@ -4,6 +4,28 @@ export default class InputHandler {
     constructor(gameController) {
         this.game = gameController;
 
+        // 1. LISTENER DEL MOUSE
+        document.addEventListener('mousemove', (event) => {
+            // Solo movemos si estamos jugando, no está en pausa y el modo es MOUSE
+            if (this.game.gameState.current === GAMESTATE.RUNNING && 
+                this.game.inputMode === 'MOUSE') {
+                
+                // Calculamos posición relativa al canvas
+                const rect = this.game.canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                
+                // Movemos el paddle directamente
+                this.game.paddle.moveTo(mouseX);
+            }
+        });
+        
+        // ... (Mouse Click para lanzar bola opcional) ...
+        document.addEventListener('mousedown', (event) => {
+             if (this.game.gameState.current === GAMESTATE.RUNNING && this.game.inputMode === 'MOUSE') {
+                 this.game.launchBall();
+             }
+        });
+
         // --- KEY DOWN (Presionar tecla) ---
         document.addEventListener('keydown', (event) => {
             const state = this.game.gameState.current;
@@ -17,7 +39,7 @@ export default class InputHandler {
                 }
             } 
             // OPCIONES
-            else if (state === GAMESTATE.OPTIONS) {
+            if (state === GAMESTATE.OPTIONS) {
                 const currentOpt = this.game.optionsView.getCurrentOption();
                 switch (event.code) {
                     case 'ArrowUp': this.game.optionsView.moveUp(); break;
@@ -25,24 +47,32 @@ export default class InputHandler {
                     case 'ArrowLeft': 
                         if (currentOpt.type === 'music') this.game.adjustMusicVol(-0.1);
                         if (currentOpt.type === 'sfx') this.game.adjustSFXVol(-0.1);
+                        if (currentOpt.type === 'input') this.game.toggleInputMode(); // <--- CAMBIAR INPUT
                         break;
                     case 'ArrowRight': 
                         if (currentOpt.type === 'music') this.game.adjustMusicVol(0.1);
                         if (currentOpt.type === 'sfx') this.game.adjustSFXVol(0.1);
+                        if (currentOpt.type === 'input') this.game.toggleInputMode(); // <--- CAMBIAR INPUT
                         break;
                     case 'Space': case 'Enter': case 'Escape':
                         if (currentOpt.type === 'back' || event.code === 'Escape') {
                             this.game.gameState.set(GAMESTATE.MENU);
                         }
+                        // También permite cambiar input con Enter si estás en esa opción
+                        if (currentOpt.type === 'input') this.game.toggleInputMode();
                         break;
                 }
             }
             // JUEGO (RUNNING)
             else if (state === GAMESTATE.RUNNING) {
                 switch (event.code) {
-                    // NUEVA LÓGICA: Solo avisamos que se presionó
-                    case 'ArrowLeft': this.game.paddle.pressLeft(); break;
-                    case 'ArrowRight': this.game.paddle.pressRight(); break;
+                    // Solo permitimos teclado si el modo es KEYBOARD
+                    case 'ArrowLeft': 
+                        if (this.game.inputMode === 'KEYBOARD') this.game.paddle.pressLeft(); 
+                        break;
+                    case 'ArrowRight': 
+                        if (this.game.inputMode === 'KEYBOARD') this.game.paddle.pressRight(); 
+                        break;
                     
                     case 'Escape': case 'KeyP': this.game.togglePause(); break;
                     case 'Space': this.game.launchBall(); break;
@@ -69,11 +99,13 @@ export default class InputHandler {
         // --- KEY UP (Soltar tecla) ---
         document.addEventListener('keyup', (event) => {
             if (this.game.gameState.current === GAMESTATE.RUNNING) {
-                switch (event.code) {
-                    // NUEVA LÓGICA: Solo avisamos que se soltó ESA tecla específica
-                    case 'ArrowLeft': this.game.paddle.releaseLeft(); break;
-                    case 'ArrowRight': this.game.paddle.releaseRight(); break;
-                }
+                // Solo soltamos si estamos en modo teclado
+                 if (this.game.inputMode === 'KEYBOARD') {
+                    switch (event.code) {
+                        case 'ArrowLeft': this.game.paddle.releaseLeft(); break;
+                        case 'ArrowRight': this.game.paddle.releaseRight(); break;
+                    }
+                 }
             }
         });
     }
