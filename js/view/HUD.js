@@ -31,10 +31,10 @@ export default class HUD {
 
         // --- FOOTER (Parte Inferior - PowerUps Activos) ---
         // Empezamos desde abajo y vamos subiendo
-        let yPos = this.gameHeight - 40; 
+        let yPos = this.gameHeight - 50; 
         const barWidth = 100;
-        const barHeight = 8; // Un poco más finas para que sea elegante
-        const iconSize = 20;
+        const barHeight = 12;
+        const iconSize = 32;
 
         activeEffects.forEach(effect => {
             let maxDuration = effect.totalDuration || 10000;
@@ -45,7 +45,7 @@ export default class HUD {
             
             if (sprite) {
                 // Icono
-                ctx.drawImage(sprite, 20, yPos - 14, iconSize, iconSize);
+                ctx.drawImage(sprite, 20, yPos - 24, iconSize, iconSize);
             } else {
                 // Fallback Texto
                 ctx.textAlign = "left";
@@ -55,7 +55,7 @@ export default class HUD {
             }
 
             // 2. DIBUJAR BARRA (Al lado del icono)
-            const barX = 50; 
+            const barX = 60; 
 
             // Fondo de la barra (Gris oscuro para ver cuánto falta)
             ctx.fillStyle = "#333";
@@ -75,7 +75,7 @@ export default class HUD {
             // ctx.fillText(effect.type, barX, yPos - 12);
 
             // SUBIMOS la posición Y para el siguiente efecto (Stack Up)
-            yPos -= 30; 
+            yPos -= 45; 
         });
     }
 }

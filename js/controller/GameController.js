@@ -40,6 +40,7 @@ export default class GameController {
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
         this.inputMode = 'KEYBOARD';
+        this.difficultyMode = 'NORMAL';
 
         this.spriteManager = new SpriteManager();
         this.renderer = new Renderer(this.ctx, this.gameWidth, this.gameHeight, this.spriteManager);
@@ -181,8 +182,6 @@ export default class GameController {
         }
         requestAnimationFrame(this.gameLoop.bind(this));
     }
-
-    // ... (adjustMusicVol, adjustSFXVol, togglePause, returnToMenu, launchBall iguales) ...
     
     adjustMusicVol(amount) {
         this.musicVolume += amount;
@@ -229,6 +228,14 @@ export default class GameController {
             this.inputMode = 'MOUSE';
         } else {
             this.inputMode = 'KEYBOARD';
+        }
+    }
+
+    toggleDifficulty() {
+        if (this.difficultyMode === 'NORMAL') {
+            this.difficultyMode = 'DYNAMIC';
+        } else {
+            this.difficultyMode = 'NORMAL';
         }
     }
         
@@ -357,7 +364,7 @@ export default class GameController {
             this.renderer.drawCRT();
         } 
         else if (this.gameState.current === GAMESTATE.OPTIONS) {
-            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode); 
+            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode, this.difficultyMode); 
             this.renderer.drawCRT();
         }
         else if (this.gameState.current === GAMESTATE.RUNNING || this.gameState.current === GAMESTATE.PAUSED) {
