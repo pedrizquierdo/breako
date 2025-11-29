@@ -1,4 +1,3 @@
-// controller/SpriteManager.js
 export default class SpriteManager {
     constructor() {
         this.sprites = {

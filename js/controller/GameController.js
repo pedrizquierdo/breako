@@ -326,8 +326,8 @@ export default class GameController {
             this.powerUps = []; 
 
             this.balls.forEach(ball => {
-            ball.speed.x *= 1.3;
-            ball.speed.y *= 1.3;
+            ball.speed.x *= 1.03;
+            ball.speed.y *= 1.03;
             });
         }
         
