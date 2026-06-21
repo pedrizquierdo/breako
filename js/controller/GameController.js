@@ -262,7 +262,7 @@ export default class GameController {
             const bricksData = this.level.bricks.map(brick => ({
                 x: brick.position.x,
                 y: brick.position.y,
-                resistencia: brick.resistencia === Infinity ? 'INF' : brick.resistencia
+                resistencia: brick.resistencia
             }));
 
             // 2. Guardar todo en el objeto dataToSave

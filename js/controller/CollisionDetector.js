@@ -103,7 +103,6 @@ export default class CollisionDetector {
                     if (ball.isExplosive) {
                         gameController.triggerShake(10);
                         level.bricks.forEach(otherBrick => {
-                            if (otherBrick.isIndestructible) return;
                             const dx = brick.position.x - otherBrick.position.x;
                             const dy = brick.position.y - otherBrick.position.y;
                             const dist = Math.sqrt(dx*dx + dy*dy);
@@ -113,7 +112,7 @@ export default class CollisionDetector {
                         });
                     }
 
-                    if (!brick.isIndestructible && (destroyed || ball.isExplosive)) {
+                    if (destroyed || ball.isExplosive) {
                         gameController.player.addScore(10);
                         gameController.spawnParticles(brick.position, '#FFFFFF');
 

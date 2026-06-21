@@ -6,7 +6,6 @@ const BRICK_HEIGHT = 24;
 const BRICK_Y_OFFSET = 50;
 const MAX_SCALED_ROWS = 8;
 const SCALED_COLS = 10;
-const INDESTRUCTIBLE_START_LEVEL = LEVEL_PATTERNS.length + 5;
 
 export default class Level {
     constructor(gameWidth, gameHeight, currentLevelNum = 1) {
@@ -53,8 +52,7 @@ export default class Level {
                     y: r * BRICK_HEIGHT + BRICK_Y_OFFSET
                 };
 
-                const resistencia = cell === 3 ? Infinity : cell;
-                this.bricks.push(new Brick(position, resistencia));
+                this.bricks.push(new Brick(position, cell));
             });
         });
     }
@@ -67,9 +65,6 @@ export default class Level {
         const rows = Math.min(MAX_SCALED_ROWS, 5 + Math.floor(extraLevels / 2));
 
         const reinforcedChance = Math.min(0.6, 0.2 + extraLevels * 0.02);
-        const indestructibleChance = currentLevelNum >= INDESTRUCTIBLE_START_LEVEL
-            ? Math.min(0.15, (currentLevelNum - INDESTRUCTIBLE_START_LEVEL) * 0.01 + 0.02)
-            : 0;
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < SCALED_COLS; c++) {
@@ -79,13 +74,7 @@ export default class Level {
                         y: r * BRICK_HEIGHT + BRICK_Y_OFFSET
                     };
 
-                    let resistencia = 1;
-                    if (indestructibleChance > 0 && Math.random() < indestructibleChance) {
-                        resistencia = Infinity;
-                    } else if (Math.random() < reinforcedChance) {
-                        resistencia = 2;
-                    }
-
+                    const resistencia = Math.random() < reinforcedChance ? 2 : 1;
                     this.bricks.push(new Brick(position, resistencia));
                 }
             }
@@ -97,9 +86,7 @@ export default class Level {
         this.bricks = []; // Limpiamos el nivel generado por defecto
 
         savedBricksData.forEach(data => {
-            // JSON no soporta Infinity, por eso se guarda como el sentinela 'INF'
-            const resistencia = data.resistencia === 'INF' ? Infinity : data.resistencia;
-            const brick = new Brick({ x: data.x, y: data.y }, resistencia);
+            const brick = new Brick({ x: data.x, y: data.y }, data.resistencia);
             this.bricks.push(brick);
         });
     }
