@@ -98,31 +98,32 @@ export default class CollisionDetector {
 
                     const destroyed = brick.hit();
                     audioController.play('hit');
-                    
+
                     // Lógica: BOLA EXPLOSIVA
                     if (ball.isExplosive) {
                         gameController.triggerShake(10);
                         level.bricks.forEach(otherBrick => {
+                            if (otherBrick.isIndestructible) return;
                             const dx = brick.position.x - otherBrick.position.x;
                             const dy = brick.position.y - otherBrick.position.y;
                             const dist = Math.sqrt(dx*dx + dy*dy);
                             if (dist < 100 && dist > 0) {
-                                otherBrick.markedForDeletion = true; 
+                                otherBrick.markedForDeletion = true;
                             }
                         });
                     }
 
-                    if (destroyed || ball.isExplosive) { 
+                    if (!brick.isIndestructible && (destroyed || ball.isExplosive)) {
                         gameController.player.addScore(10);
                         gameController.spawnParticles(brick.position, '#FFFFFF');
-                        
+
                         // Lógica: LLUVIA
                         const dropRate = rainActive ? 0.8 : 0.4;
                         if (Math.random() < dropRate) {
                             gameController.spawnPowerUp(brick.position);
                         }
                     }
-                    break; 
+                    break;
                 }
             }
         });

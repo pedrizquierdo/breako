@@ -1,16 +1,23 @@
 export default class Brick {
-    constructor(position) {
+    constructor(position, resistencia = null) {
         this.position = position;
         this.width = 80;
         this.height = 24;
         this.markedForDeletion = false;
-        
+
         // [PDF Pág 5] Atributo: resistencia
+        // Si no se pasa resistencia explicita, se genera aleatoria:
         // 20% de probabilidad de ser un ladrillo reforzado (2 golpes), si no, 1 golpe.
-        this.resistencia = Math.random() > 0.8 ? 2 : 1; 
+        this.resistencia = resistencia !== null ? resistencia : (Math.random() > 0.8 ? 2 : 1);
+
+        this.isIndestructible = this.resistencia === Infinity;
     }
 
     hit() {
+        if (this.isIndestructible) {
+            return false; // Nunca se destruye ni pierde resistencia
+        }
+
         this.resistencia--;
         if (this.resistencia <= 0) {
             this.markedForDeletion = true;

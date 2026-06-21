@@ -9,12 +9,14 @@ import GameState, { GAMESTATE } from '../model/GameState.js';
 import Player from '../model/Player.js';
 import HUD from '../view/HUD.js';
 import GameOverView from '../view/GameOverView.js';
-import MainMenuView from '../view/MainMenuView.js'; 
+import MainMenuView from '../view/MainMenuView.js';
 import OptionsView from '../view/OptionsView.js';
+import ShopView from '../view/ShopView.js';
 import StorageManager from '../utils/StorageManager.js';
 import PowerUp, { POWERUP_TYPES } from '../model/PowerUp.js';
-import SpriteManager from './SpriteManager.js'; 
+import SpriteManager from './SpriteManager.js';
 import Particle from '../model/Particle.js';
+import { UPGRADES_CONFIG, UPGRADE_TYPES } from '../model/Upgrade.js';
 
 export default class GameController {
     constructor(canvas) {
@@ -34,27 +36,32 @@ export default class GameController {
         
         this.paddle = new Paddle(this.gameWidth, this.gameHeight);
         this.balls.push(new Ball(this.gameWidth, this.gameHeight));
-        this.level = new Level(this.gameWidth, this.gameHeight); 
+        this.level = new Level(this.gameWidth, this.gameHeight, this.currentLevelNum);
 
         this.audioController = new AudioController();
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
         this.inputMode = 'KEYBOARD';
         this.difficultyMode = 'NORMAL';
+        this.ballSpeedMultiplier = 1;
 
         this.spriteManager = new SpriteManager();
         this.renderer = new Renderer(this.ctx, this.gameWidth, this.gameHeight, this.spriteManager);
-        
-        
+
+
         this.hud = new HUD(this.gameWidth, this.gameHeight, this.spriteManager);
-        
+
         this.gameOverView = new GameOverView(this.gameWidth, this.gameHeight);
         this.mainMenuView = new MainMenuView(this.gameWidth, this.gameHeight);
         this.optionsView = new OptionsView(this.gameWidth, this.gameHeight);
+        this.shopView = new ShopView(this.gameWidth, this.gameHeight);
         this.storageManager = new StorageManager();
         this.collisionDetector = new CollisionDetector();
-        
-        this.inputHandler = new InputHandler(this); 
+
+        this.purchasedUpgrades = this.storageManager.loadPurchasedUpgrades();
+        this.applyPurchasedUpgrades();
+
+        this.inputHandler = new InputHandler(this);
         this.lastTime = 0;
     }
 
@@ -97,6 +104,9 @@ export default class GameController {
                     this.audioController.play('bottomHit');
                 }
                 break;
+            case "TIENDA":
+                this.gameState.set(GAMESTATE.SHOP);
+                break;
             case "OPCIONES":
                 this.gameState.set(GAMESTATE.OPTIONS);
                 break;
@@ -107,12 +117,13 @@ export default class GameController {
     }
 
     startLevel() {
+        this.applyPurchasedUpgrades();
         this.gameState.set(GAMESTATE.RUNNING);
-        this.balls = [new Ball(this.gameWidth, this.gameHeight)];
+        this.balls = [new Ball(this.gameWidth, this.gameHeight, null, this.ballSpeedMultiplier)];
         this.paddle.reset();
         this.powerUps = [];
         this.activeEffects = [];
-        this.level = new Level(this.gameWidth, this.gameHeight);
+        this.level = new Level(this.gameWidth, this.gameHeight, this.currentLevelNum);
     }
 
     resetGame() {
@@ -121,7 +132,55 @@ export default class GameController {
     }
 
     spawnPowerUp(position) {
-        this.powerUps.push(new PowerUp(position));
+        this.powerUps.push(new PowerUp(position, this.player.buffChanceBonus));
+    }
+
+    purchaseUpgrade(upgradeId) {
+        const upgrade = UPGRADES_CONFIG.find(u => u.id === upgradeId);
+        if (!upgrade) return false;
+        if (this.purchasedUpgrades.includes(upgradeId)) return false;
+        if (this.player.puntosMejora < upgrade.costo) return false;
+
+        this.player.puntosMejora -= upgrade.costo;
+        this.purchasedUpgrades = this.storageManager.addPurchasedUpgrade(upgradeId);
+        this.applyPurchasedUpgrades();
+        this.audioController.play('powerup');
+        return true;
+    }
+
+    applyPurchasedUpgrades() {
+        const baseMaxLives = 3;
+        const basePaddleWidth = 150;
+
+        let maxLivesBonus = 0;
+        let paddleWidthBonus = 0;
+        let ballSpeedBonus = 0;
+        let buffChanceBonus = 0;
+
+        this.purchasedUpgrades.forEach(id => {
+            const upgrade = UPGRADES_CONFIG.find(u => u.id === id);
+            if (!upgrade) return;
+
+            switch (upgrade.tipo) {
+                case UPGRADE_TYPES.MAX_LIVES:
+                    maxLivesBonus += upgrade.valor;
+                    break;
+                case UPGRADE_TYPES.PADDLE_WIDTH:
+                    paddleWidthBonus += upgrade.valor;
+                    break;
+                case UPGRADE_TYPES.BALL_SPEED:
+                    ballSpeedBonus += upgrade.valor;
+                    break;
+                case UPGRADE_TYPES.BUFF_CHANCE:
+                    buffChanceBonus += upgrade.valor;
+                    break;
+            }
+        });
+
+        this.player.maxLives = baseMaxLives + maxLivesBonus;
+        this.player.buffChanceBonus = buffChanceBonus;
+        this.paddle.defaultWidth = basePaddleWidth * (1 + paddleWidthBonus);
+        this.ballSpeedMultiplier = 1 + ballSpeedBonus;
     }
 
     activatePowerUp(powerUp) {
@@ -203,7 +262,7 @@ export default class GameController {
             const bricksData = this.level.bricks.map(brick => ({
                 x: brick.position.x,
                 y: brick.position.y,
-                resistencia: brick.resistencia
+                resistencia: brick.resistencia === Infinity ? 'INF' : brick.resistencia
             }));
 
             // 2. Guardar todo en el objeto dataToSave
@@ -322,8 +381,8 @@ export default class GameController {
         if (this.level.bricks.length === 0) {
             this.audioController.play('win');
             this.currentLevelNum++;
-            this.level = new Level(this.gameWidth, this.gameHeight);
-            this.powerUps = []; 
+            this.level = new Level(this.gameWidth, this.gameHeight, this.currentLevelNum);
+            this.powerUps = [];
 
             this.balls.forEach(ball => {
             ball.speed.x *= 1.03;
@@ -341,7 +400,7 @@ export default class GameController {
                 this.gameState.set(GAMESTATE.GAMEOVER);
                 this.gameOverView.resetSelection();
             } else {
-                this.balls = [new Ball(this.gameWidth, this.gameHeight)];
+                this.balls = [new Ball(this.gameWidth, this.gameHeight, null, this.ballSpeedMultiplier)];
                 this.paddle.reset();
                 this.activeEffects = [];
                 if (isDead) this.audioController.play('bottomHit');
@@ -364,7 +423,11 @@ export default class GameController {
             this.renderer.drawCRT();
         } 
         else if (this.gameState.current === GAMESTATE.OPTIONS) {
-            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode, this.difficultyMode); 
+            this.optionsView.draw(this.ctx, this.musicVolume, this.sfxVolume, this.inputMode, this.difficultyMode);
+            this.renderer.drawCRT();
+        }
+        else if (this.gameState.current === GAMESTATE.SHOP) {
+            this.shopView.draw(this.ctx, this.player.puntosMejora, this.purchasedUpgrades);
             this.renderer.drawCRT();
         }
         else if (this.gameState.current === GAMESTATE.RUNNING || this.gameState.current === GAMESTATE.PAUSED) {

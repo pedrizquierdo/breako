@@ -18,7 +18,7 @@ export default class AudioController {
         this.currentMusic = null;
 
         // Configuración inicial de volumen
-        this.sounds.hit.volume = 0.5;
+        this.sounds.hit.volume = 0.6;
         this.sounds.bottomHit.volume = 0.6;
         this.sounds.powerup.volume = 0.6;
         

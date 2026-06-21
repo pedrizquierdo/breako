@@ -15,20 +15,21 @@ export const POWERUP_TYPES = {
 };
 
 export default class PowerUp {
-    constructor(position) {
+    constructor(position, buffChanceBonus = 0) {
         this.position = { x: position.x, y: position.y };
-        
+
         // Dimensiones grandes para que se vean bien
         this.width = 32;
         this.height = 32;
-        
-        // Seleccionar tipo aleatorio
-        const keys = Object.values(POWERUP_TYPES);
-        this.type = keys[Math.floor(Math.random() * keys.length)];
-        
-        // --- AQUÍ ESTÁ EL TRUCO ---
-        
-        // 1. Definimos explícitamente la lista de malos usando los valores reales
+
+        // 1. Definimos explícitamente las listas de buenos y malos usando los valores reales
+        const buffs = [
+            POWERUP_TYPES.MEGA_PADDLE,
+            POWERUP_TYPES.EXPLOSIVE,
+            POWERUP_TYPES.MULTIBALL,
+            POWERUP_TYPES.LOOT_RAIN,
+            POWERUP_TYPES.SHIELD
+        ];
         const debuffs = [
             POWERUP_TYPES.MINI_PADDLE,
             POWERUP_TYPES.HEAVY_BALL,
@@ -36,6 +37,11 @@ export default class PowerUp {
             POWERUP_TYPES.ARMORED_BRICKS,
             POWERUP_TYPES.DARKNESS
         ];
+
+        // Seleccionar tipo aleatorio, sesgado por buffChanceBonus (mejoras compradas)
+        const buffChance = Math.min(1, Math.max(0, 0.5 + buffChanceBonus));
+        const pool = Math.random() < buffChance ? buffs : debuffs;
+        this.type = pool[Math.floor(Math.random() * pool.length)];
 
         // Verificamos si el tipo actual está en la lista de malos
         this.isDebuff = debuffs.includes(this.type);

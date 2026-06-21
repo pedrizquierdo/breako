@@ -32,4 +32,23 @@ export default class StorageManager {
     clearProgress() {
         localStorage.removeItem('breako_savegame');
     }
+
+    // --- MEJORAS COMPRADAS (PERMANENTE, NO SE BORRA AL EMPEZAR PARTIDA) ---
+    savePurchasedUpgrades(upgradeIds) {
+        localStorage.setItem('breako_upgrades', JSON.stringify(upgradeIds));
+    }
+
+    loadPurchasedUpgrades() {
+        const stored = localStorage.getItem('breako_upgrades');
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    addPurchasedUpgrade(upgradeId) {
+        const current = this.loadPurchasedUpgrades();
+        if (!current.includes(upgradeId)) {
+            current.push(upgradeId);
+            this.savePurchasedUpgrades(current);
+        }
+        return current;
+    }
 }

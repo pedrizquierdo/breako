@@ -86,6 +86,24 @@ export default class InputHandler {
                 }
             }
             
+            // --- TIENDA ---
+            else if (state === GAMESTATE.SHOP) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                        this.game.shopView.moveUp();
+                        break;
+                    case 'ArrowDown':
+                        this.game.shopView.moveDown();
+                        break;
+                    case 'Space': case 'Enter':
+                        this.game.purchaseUpgrade(this.game.shopView.getCurrentUpgrade().id);
+                        break;
+                    case 'Escape':
+                        this.game.gameState.set(GAMESTATE.MENU);
+                        break;
+                }
+            }
+
             // --- JUEGO (RUNNING) ---
             else if (state === GAMESTATE.RUNNING) {
                 switch (event.code) {

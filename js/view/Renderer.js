@@ -60,7 +60,14 @@ export default class Renderer {
 
             // --- LADRILLOS (Estilo Noir con Código) ---
             } else if (name === 'Brick') {
-                if (object.resistencia > 1) {
+                if (object.isIndestructible) {
+                    // Indestructible: Negro con borde amarillo grueso
+                    this.ctx.fillStyle = '#111';
+                    this.ctx.fillRect(object.position.x, object.position.y, object.width, object.height);
+                    this.ctx.strokeStyle = '#fa0';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.strokeRect(object.position.x + 1, object.position.y + 1, object.width - 2, object.height - 2);
+                } else if (object.resistencia > 1) {
                     // Reforzado: Gris oscuro con borde blanco grueso
                     this.ctx.fillStyle = '#444'; 
                     this.ctx.fillRect(object.position.x, object.position.y, object.width, object.height);

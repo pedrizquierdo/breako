@@ -1,14 +1,15 @@
 export default class Ball {
-    constructor(gameWidth, gameHeight, position = null) {
+    constructor(gameWidth, gameHeight, position = null, speedMultiplier = 1) {
         this.gameWidth = gameWidth;
         this.gameHeight = gameHeight;
-        
+
         // DIMENSIÓN DEL SPRITE
-        this.size = 20; 
-        
+        this.size = 20;
+
         this.isExplosive = false;
         this.isHeavy = false;
-        
+        this.speedMultiplier = speedMultiplier; // Aplicado al lanzar (mejoras compradas)
+
         if (position) {
             // Para bolas clonadas (Multiball)
             this.position = { x: position.x, y: position.y };
@@ -31,7 +32,7 @@ export default class Ball {
     launch() {
         if (this.isStuck) {
             this.isStuck = false;
-            this.speed = { x: 4, y: -4 }; 
+            this.speed = { x: 4 * this.speedMultiplier, y: -4 * this.speedMultiplier };
         }
     }
 

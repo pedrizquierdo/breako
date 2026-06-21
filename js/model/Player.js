@@ -5,6 +5,7 @@ export default class Player {
         this.score = 0;
         this.activeShield = false; // Para lógica de escudo
         this.puntosMejora = 0; // [PDF Pág 5] Puntos de mejora / Monedas
+        this.buffChanceBonus = 0; // Bonus de probabilidad de power-up positivo (mejoras compradas)
     }
 
     loseLife() {

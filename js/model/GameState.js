@@ -4,7 +4,8 @@ export const GAMESTATE = {
     MENU: 2,
     GAMEOVER: 3,
     VICTORY: 4,
-    OPTIONS: 5 // <--- Nuevo estado
+    OPTIONS: 5, // <--- Nuevo estado
+    SHOP: 6
 };
 
 export default class GameState {

@@ -2,7 +2,7 @@ export default class MainMenuView {
     constructor(gameWidth, gameHeight) {
         this.gameWidth = gameWidth;
         this.gameHeight = gameHeight;
-        this.options = ["NUEVA PARTIDA", "CONTINUAR", "OPCIONES", "SALIR"];
+        this.options = ["NUEVA PARTIDA", "CONTINUAR", "TIENDA", "OPCIONES", "SALIR"];
         this.selectedIndex = 0;
     }
 
